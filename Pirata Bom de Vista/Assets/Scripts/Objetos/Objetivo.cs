@@ -10,10 +10,23 @@ public enum TipoObjetivo {
 }
 
 [Serializable]
+public class SaveTransform {
+    public Vector3 position = new Vector3();
+    public Quaternion rotation = new Quaternion();
+    public Vector3 localScale = new Vector3();
+}
+
+[Serializable]
 public class Objetivo {
     public string Titulo = "";
     public string Descricao = "";
     public TipoObjetivo Tipo = TipoObjetivo.CUTSCENE;
+    public bool podeSerCarregado = true;
+    public Transform posCarregamento;
+    [HideInInspector]
+    public SaveTransform posCarregamentoSave = new SaveTransform();
+    [HideInInspector]
+    public bool transformSalvo = false;
 }
 
 [Serializable]

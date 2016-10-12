@@ -22,7 +22,7 @@ public class PlayerAnimEditor : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 #if UNITY_EDITOR
-        corteAnimacao.indiceAnim = diretor.GetComponent<DirectorsContent>().numeroPos;
+        corteAnimacao.indiceAnim = diretor.GetComponent<DirectorsManager>().GetIndiceAnimacao();
 
         if (addAnimCorte)
         {
@@ -47,6 +47,9 @@ public class PlayerAnimEditor : MonoBehaviour {
 
 
         addAnimCorte = false;
+        corteAnimacao.posicao = Vector3.zero;
+        corteAnimacao.rotacao = Vector3.zero;
+
         corteAnimacao.clipeAnim = null;
         corteAnimacao.decisivo = false;
     }

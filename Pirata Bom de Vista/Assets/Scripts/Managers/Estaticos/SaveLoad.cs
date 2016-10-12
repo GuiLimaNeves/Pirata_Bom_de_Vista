@@ -9,6 +9,7 @@ public class SaveLoad : MonoBehaviour {
     public static SaveLoad instance;
     public SaveData loadedData;
     public bool loadDebug = true;
+    public bool loading = false;
 
 	// Use this for initialization
 	void Start () {
@@ -34,6 +35,9 @@ public class SaveLoad : MonoBehaviour {
         FileStream file = File.Create(Application.persistentDataPath + "/PirataBomDeVista/" + "saveFile.pbv");
         SaveData data = new SaveData();
         data.faseAtual = LevelManager.instance.GetFaseAtual();
+        data.indiceAnimacao = DirectorsManager.instance.GetIndiceAnimacao();
+
+        //Debug.Log("Salvou");
 
         bf.Serialize(file, data);
         file.Close();
@@ -47,8 +51,11 @@ public class SaveLoad : MonoBehaviour {
             FileStream file = File.Open(Application.persistentDataPath + "/PirataBomDeVista/" + "saveFile.pbv", FileMode.Open);
             loadedData = (SaveData)bf.Deserialize(file);
             file.Close();
-           
-        }        
+            loading = true;
+            Debug.Log("Carregando jogo salvo");
+        }else {
+            loading = false;
+        }
     }
 
     public void Delete() {
@@ -85,4 +92,5 @@ public class SaveLoad : MonoBehaviour {
 [Serializable]
 public class SaveData {
     public FaseAtual faseAtual = new FaseAtual();
+    public ConteudoAtual indiceAnimacao = new ConteudoAtual();
 }

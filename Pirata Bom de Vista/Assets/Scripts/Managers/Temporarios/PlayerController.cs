@@ -12,7 +12,7 @@ public class PlayerController : MonoBehaviour
 
 
     //TP_MOTOR
-
+    public bool jump = false;
     public float MoveSpeed = 10f;
     public float JumpSpeed = 6f;
     public float Gravity = 21f;
@@ -143,9 +143,11 @@ public class PlayerController : MonoBehaviour
 
     public void Jump()
     {
-
-        if (PlayerManager.CharacterController.isGrounded)
-            VerticalVelocity = JumpSpeed;
+        if (jump) {
+            if (PlayerManager.CharacterController.isGrounded)
+                VerticalVelocity = JumpSpeed;
+        }
+        
     }
 
     void SnapAlignCharacterWithCamera()

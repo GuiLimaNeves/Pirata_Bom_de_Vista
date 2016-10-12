@@ -21,6 +21,7 @@ public class CameraManager : MonoBehaviour {
     public float Y_Smooth = 0.1f;
     public float Y_MinLimit = -40f;
     public float Y_MaxLimit = 80f;
+    public float rotacaoInicialX = 90;
 
     private float mouseX = 0f;
     private float mouseY = 0f;
@@ -29,7 +30,7 @@ public class CameraManager : MonoBehaviour {
     private float velZ = 0f;
     private float velDistance = 0f;
     private float startDistance = 0f;
-    private Vector3 position = new Vector3(0.02f, 5.49f, 1.5f);
+    public Vector3 position = new Vector3(0.02f, 5.49f, 1.5f);
     private Vector3 desiredPosition = new Vector3(0.02f, 5.49f, 1.5f);
     private float desiredDistance = 0f;
 
@@ -40,6 +41,7 @@ public class CameraManager : MonoBehaviour {
     void Awake () {
         instance = this;
         myTransform = this.transform;
+        desiredPosition = position;
         Distance = Mathf.Clamp(Distance, DistanceMin, DistanceMax);
         startDistance = Distance;
         Reset();
@@ -120,7 +122,7 @@ public class CameraManager : MonoBehaviour {
 
     public void Reset()
     {
-        mouseX = 0;
+        mouseX = rotacaoInicialX;
         mouseY = 10;
         Distance = startDistance;
         desiredDistance = Distance;

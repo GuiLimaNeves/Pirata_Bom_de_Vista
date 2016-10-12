@@ -8,6 +8,7 @@ public class ObjetivosController : MonoBehaviour {
 
     public Objetivo objetivoAtual;
     private FaseAtual faseAtual;
+    private bool firstLoad = true;
 
     // Use this for initialization
     void Start () {
@@ -21,9 +22,10 @@ public class ObjetivosController : MonoBehaviour {
         }
 
         //TODO: usar indice de fase e de objetivo salvo.
-        faseAtual = SaveLoad.instance.GetLoadedData().faseAtual;
+        faseAtual = LoaderManager.instance.GetFaseCarregada();
 
-        objetivoAtual = ObjetivosContent.instance.GetObjetivoAtual(faseAtual);
+        //objetivoAtual = ObjetivosContent.instance.GetObjetivoAtual(faseAtual);
+        AtualizaObjetivoAtual();
         AtivaObjetivo();
 
     }
@@ -35,7 +37,6 @@ public class ObjetivosController : MonoBehaviour {
 
 
     public void AtivaObjetivo() {
-        
         StartCoroutine(AtivaObjtivo_CO());
         
     }
@@ -46,19 +47,34 @@ public class ObjetivosController : MonoBehaviour {
             yield return 0;
         }
 
+        while (PlayerManager.instance == null) {
+            yield return 0;
+        }
 
-        //Desativar todos os inputs caso esteja esperando o fade.
+        //Se for a primeira vez que o jogo é aberto, atualizar a posição imediatamente.
+        if (SaveLoad.instance.loading) {
+            if (firstLoad) {
+                firstLoad = false;
+                //PlayerManager.instance.AtualizaPosPlayerObjetivo(objetivoAtual.posCarregamentoSave);
+            }
+        }
+
         LevelManager.instance.DesativaInput();
 
-        while (FadeManager.instance.fading || SceneLoader.instance.esperandoFade)
+        //Desativar todos os inputs caso esteja esperando o fade.
+        if (FadeManager.instance.fading || SceneLoader.instance.esperandoFade)
         {
+            while (FadeManager.instance.fading || SceneLoader.instance.esperandoFade)
+            {
 
-            yield return 0;
+                yield return 0;
+            }
         }
 
         if (objetivoAtual.Tipo == TipoObjetivo.CUTSCENE)
         {
-            PlayerManager.instance.SetPlayerState(PlayerState.CUTSCENE);
+            //PlayerManager.instance.SetPlayerState(PlayerState.CUTSCENE);
+
 
             if (FadeManager.instance != null)
             {
@@ -68,8 +84,8 @@ public class ObjetivosController : MonoBehaviour {
                 }
             }
 
-            yield return new WaitForSeconds(1);
 
+            yield return new WaitForSeconds(0.6f);
             UIManager.instance.DesativaTodaUI();
 
             while (UIManager.instance.alterandoUI)
@@ -82,6 +98,14 @@ public class ObjetivosController : MonoBehaviour {
         }
         else if (objetivoAtual.Tipo == TipoObjetivo.LUGAR)
         {
+            bool mudou = false;
+            yield return null;
+            if (!DirectorsManager.instance.ativado) {
+                mudou = true;
+                PlayerManager.instance.AtualizaPosPlayerObjetivo(objetivoAtual.posCarregamentoSave);
+            }
+
+
             while (DirectorsManager.instance == null)
             {
                 yield return null;
@@ -94,6 +118,9 @@ public class ObjetivosController : MonoBehaviour {
 
 
             yield return new WaitForSeconds(0.6f);
+            if (!mudou) {
+                //PlayerManager.instance.AtualizaPosPlayerObjetivo(objetivoAtual.posCarregamentoSave);
+            }
 
             //Debug.Log("Lugar??");
             //TODO: Enquanto não mostrar objetivo, não movimentar.
@@ -102,6 +129,7 @@ public class ObjetivosController : MonoBehaviour {
         }
         else if (objetivoAtual.Tipo == TipoObjetivo.COMBATE)
         {
+            PlayerManager.instance.AtualizaPosPlayerObjetivo(objetivoAtual.posCarregamentoSave);
             PlayerManager.instance.SetPlayerState(PlayerState.COMBATE);
         }
 
@@ -114,17 +142,20 @@ public class ObjetivosController : MonoBehaviour {
 
         if (faseAtual.indice < ObjetivosContent.instance.GetNumeroObjetivos(faseAtual.fase) - 1)
         {
+            //Debug.Log("Passou objetivo");
             faseAtual.indice++;
             Objetivo objetivoTemp = ObjetivosContent.instance.CopiaObjetivo(objetivoAtual);
             AtualizaObjetivoAtual();
 
             if (objetivoTemp.Tipo == TipoObjetivo.CUTSCENE && objetivoAtual.Tipo != TipoObjetivo.CUTSCENE) {
+                //Debug.Log("Entrou cutscene");
                 DirectorsManager.instance.DesativaDiretor();
             }
             AtivaObjetivo();
         }
         else if (faseAtual.fase < ObjetivosContent.instance.GetNumeroFases() - 1)
         {
+            //Debug.Log("Passou a fase");
             faseAtual.fase++;
             AtualizaObjetivoAtual();
             AtivaObjetivo();
@@ -148,5 +179,9 @@ public class ObjetivosController : MonoBehaviour {
         temp.fase = faseAtual.fase;
         temp.indice = faseAtual.indice;
         return temp;
+    }
+
+    public Objetivo GetObjetivoAtual() {
+        return objetivoAtual;
     }
 }

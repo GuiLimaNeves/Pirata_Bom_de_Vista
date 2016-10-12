@@ -111,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Editor\DirectorsEditor.cs" />
+    <Compile Include="Assets\Editor\ObjetivosEditor.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Resources\Legendas\legendas.xml" />

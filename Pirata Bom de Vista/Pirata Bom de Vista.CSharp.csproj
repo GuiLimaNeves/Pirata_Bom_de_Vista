@@ -69,9 +69,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\AssetsTemporario\Helper.cs" />
     <Compile Include="Assets\Scripts\Managers\Estaticos\AudioManager.cs" />
     <Compile Include="Assets\Scripts\Managers\Estaticos\FadeManager.cs" />
+    <Compile Include="Assets\Scripts\Managers\Estaticos\Helper.cs" />
     <Compile Include="Assets\Scripts\Managers\Estaticos\ManagerInstance.cs" />
     <Compile Include="Assets\Scripts\Managers\Estaticos\SaveLoad.cs" />
     <Compile Include="Assets\Scripts\Managers\Estaticos\SceneLoader.cs" />
@@ -80,6 +80,7 @@
     <Compile Include="Assets\Scripts\Managers\Temporarios\DirectorsManager.cs" />
     <Compile Include="Assets\Scripts\Managers\Temporarios\LegendaContainer.cs" />
     <Compile Include="Assets\Scripts\Managers\Temporarios\LevelManager.cs" />
+    <Compile Include="Assets\Scripts\Managers\Temporarios\LoaderManager.cs" />
     <Compile Include="Assets\Scripts\Managers\Temporarios\LoadingScreenManager.cs" />
     <Compile Include="Assets\Scripts\Managers\Temporarios\MainMenuManager.cs" />
     <Compile Include="Assets\Scripts\Managers\Temporarios\MovimentoAgua.cs" />

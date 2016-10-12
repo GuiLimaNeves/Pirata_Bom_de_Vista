@@ -28,7 +28,7 @@ public class PirateEditor : MonoBehaviour
     {
 
 #if UNITY_EDITOR
-        corteAnimacao.indiceAnim = diretor.GetComponent<DirectorsContent>().numeroPos;
+        corteAnimacao.indiceAnim = diretorManager.indiceConteudoAtual;
 
         if (addAnimCorte)
         {

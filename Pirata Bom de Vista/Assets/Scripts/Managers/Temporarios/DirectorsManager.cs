@@ -6,9 +6,10 @@ using System;
 [Serializable]
 public class CorteAnimacao
 {
-    public int indiceAnim = 0;
+    public ConteudoAtual indiceAnim = new ConteudoAtual();
     public bool decisivo = false;
     public AnimationClip clipeAnim;
+    public Vector3 posicao, rotacao;
     public Transform objetoPassado;
     public Transform destinoObjeto;
 }
@@ -32,8 +33,10 @@ public class DirectorsManager : MonoBehaviour {
 
     [HideInInspector]
     public bool terminaCorteEmergencial = false;
-    private int indiceAnimacao = 0;
+    //public int indiceAnimacao = 0;
     private int indiceLegenda = 0;
+
+    public ConteudoAtual indiceConteudoAtual = new ConteudoAtual();
 
     [HideInInspector]
     public bool temDecisivo = false;
@@ -41,6 +44,7 @@ public class DirectorsManager : MonoBehaviour {
     public bool esperandoAnim = false;
     [HideInInspector]
     public float tempoAguardoCutscenes = 0.6f;
+    public bool fadeAposCutscene = true;
 
     private LegendaContainer legendas;
 
@@ -60,6 +64,12 @@ public class DirectorsManager : MonoBehaviour {
 
         camera = Camera.main;
         posY = (1 - tamanho) / 2;
+
+        //Debug.Log(SaveLoad.instance.loadedData.faseAtual.indice);
+
+        //indiceAnimacao = SaveLoad.instance.loadedData.indiceAnimacao;
+        //indiceAnimacao = LoaderManager.instance.GetIndiceAnimacao();
+        indiceConteudoAtual = LoaderManager.instance.GetIndiceConteudo();
 
         legendas = LegendaContainer.Load();
         if (ativarInicio) {
@@ -100,18 +110,61 @@ public class DirectorsManager : MonoBehaviour {
     public void ProximaCutscene() {
         //Debug.Log("Chamou a outra");
         if (!rodandoCorte) {
-            CorteSave corte = DirectorsContent.instance.GetCorte(indiceAnimacao);
+            if (DirectorsContent.instance.GetNumeroCortes(indiceConteudoAtual) > indiceConteudoAtual.corte) {
+
+            }
+            CorteSave corte = DirectorsContent.instance.GetCorte(indiceConteudoAtual);
+
             if (corte == null) {
-                //LevelManager.instance.AtivaInput();
+                NovaCutsceneAdjust();
                 ObjetivosController.instance.ProximoObjetivo();
+
                 return;
             }
             //Debug.Log("Entrou");
             LevelManager.instance.EventoCutscene();
             StartCoroutine(AtivaCorte(corte));
-            
+        }  
+    }
+
+    public IEnumerator FadeTerminoCutscene() {
+
+        while (FadeManager.instance.fading) {
+            yield return null;
         }
-        
+
+        FadeManager.instance.Fade(FadeMode.IN);
+        yield return null;
+
+
+        while (FadeManager.instance.fading)
+        {
+            yield return null;
+        }
+
+        PlayerManager.instance.AtualizaPosPlayerObjetivo(ObjetivosController.instance.GetObjetivoAtual().posCarregamentoSave);
+        yield return new WaitForSeconds(0.6f);
+        FadeManager.instance.Fade(FadeMode.OUT);
+        yield return null;
+
+        while (FadeManager.instance.fading)
+        {
+            yield return null;
+        }
+
+        yield return null;
+        alterando = false;
+    }
+
+    public void NovaCutsceneAdjust() {
+        indiceConteudoAtual.corte = 0;
+        if (indiceConteudoAtual.cutscene < DirectorsContent.instance.GetNumeroCutscenes(indiceConteudoAtual) - 1) {
+            indiceConteudoAtual.cutscene++;
+        } else if (indiceConteudoAtual.fase < DirectorsContent.instance.GetNumeroFases() - 1) {
+            indiceConteudoAtual.fase++;
+        } else {
+            Debug.Log("Acabaram todas cutscenes do jogo");
+        }
     }
 
     public void ProximaLegenda() {
@@ -144,6 +197,7 @@ public class DirectorsManager : MonoBehaviour {
             camera.transform.LookAt(corte.lookAt);
         }
 
+        PlayerManager.instance.AtualizaPosPlayerObjetivo(ObjetivosController.instance.GetObjetivoAtual().posCarregamentoSave);
         if (temDecisivo)
         {
             //Debug.Log("Tem decisivo");
@@ -237,7 +291,7 @@ public class DirectorsManager : MonoBehaviour {
         yield return null;
         rodandoCorte = false;
         yield return null;
-        indiceAnimacao++;
+        indiceConteudoAtual.corte++;
         ProximaCutscene();
     }
 
@@ -307,7 +361,15 @@ public class DirectorsManager : MonoBehaviour {
         camera.rect = new Rect(XY_final, WH_final);
         ativado = false;
         yield return null;
-        alterando = false;
+
+        if (fadeAposCutscene) {
+            StartCoroutine(FadeTerminoCutscene());
+        }else
+        {
+            alterando = false;
+        }
+
+        
     }
 
     private IEnumerator AtivarComeco() {
@@ -337,9 +399,9 @@ public class DirectorsManager : MonoBehaviour {
     /// Retorna o indice da animação atual
     /// </summary>
     /// <returns></returns>
-    public int GetIndiceAnimacao() {
+    public ConteudoAtual GetIndiceAnimacao() {
         //Debug.Log("indice anim: " + indiceAnimacao);
-        return indiceAnimacao;
+        return indiceConteudoAtual;
     }
 
     
@@ -352,6 +414,8 @@ public class DirectorsManager : MonoBehaviour {
         copia.decisivo = original.decisivo;
         copia.objetoPassado = original.objetoPassado;
         copia.destinoObjeto = original.destinoObjeto;
+        copia.posicao = original.posicao;
+        copia.rotacao = original.rotacao;
 
         return copia;
     }
@@ -366,6 +430,7 @@ public class DirectorsManager : MonoBehaviour {
         temDecisivo = false;
     }
 
-
-
+    public ConteudoAtual GetCorteAtual() {
+        return indiceConteudoAtual;
+    }
 }

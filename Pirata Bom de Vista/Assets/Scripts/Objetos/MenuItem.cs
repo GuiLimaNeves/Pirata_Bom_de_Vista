@@ -22,10 +22,12 @@ public class MenuItem : MonoBehaviour {
     }
 
     public IEnumerator AtivaBotaoCo() {
-        
+        MainMenuManager.instance.ResetaPopUps();
+
         switch (meuTipo){
             case tipoBotao.NOVO_JOGO: {
                     Debug.Log("Novo Jogo");
+
                     if (!SaveLoad.instance.CheckIfLoadExists())
                     {
                         MainMenuManager.instance.FadeOutMenu();
@@ -44,7 +46,8 @@ public class MenuItem : MonoBehaviour {
 
                     }
                     else {
-                        Debug.Log("Aviso de save existente");
+                        MainMenuManager.instance.ConfirmacaoNovoJogo();
+                        //Debug.Log("Aviso de save existente");
                     }
                 }break;
 

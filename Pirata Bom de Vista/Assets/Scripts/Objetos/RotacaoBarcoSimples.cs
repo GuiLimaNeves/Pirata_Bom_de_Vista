@@ -8,6 +8,7 @@ public class RotacaoBarcoSimples : MonoBehaviour {
     public float limite = 3;
     public float limiteSubida = 0.4f;
     public float velocidade = 0.5f;
+    public float rotacaoInicial = 180;
 
     private float rotacao = 0, contadorSubida = 0, inicial = 0;
     private Transform myTransform;
@@ -17,6 +18,7 @@ public class RotacaoBarcoSimples : MonoBehaviour {
 	void Start () {
         myTransform = this.transform;
         inicial = myTransform.position.y;
+        
     }
 
     // Update is called once per frame
@@ -28,7 +30,7 @@ public class RotacaoBarcoSimples : MonoBehaviour {
                 {
 
                     rotacao += Time.deltaTime * velocidade;
-                    myTransform.eulerAngles = new Vector3(0, 0, rotacao);
+                    myTransform.eulerAngles = new Vector3(0, rotacaoInicial, rotacao);
                 }
                 else
                 {
@@ -41,7 +43,7 @@ public class RotacaoBarcoSimples : MonoBehaviour {
                 {
 
                     rotacao -= Time.deltaTime * velocidade;
-                    myTransform.eulerAngles = new Vector3(0, 0, rotacao);
+                    myTransform.eulerAngles = new Vector3(0, rotacaoInicial, rotacao);
                 }
                 else
                 {

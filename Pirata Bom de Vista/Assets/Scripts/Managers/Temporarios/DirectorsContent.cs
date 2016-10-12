@@ -11,8 +11,60 @@ using System.IO;
 #region Classes
 
 [Serializable]
+public class Conteudo {
+    public List<FaseCutscene> todasFases = new List<FaseCutscene>();
+
+
+    [Serializable]
+    public class FaseCutscene {
+        [SerializeField]
+        private string nomeFase = "";
+        public List<Cutscene> cutscene = new List<Cutscene>();
+    }
+
+
+    [Serializable]
+    public class Cutscene {
+        public string tituloCutscene = "";
+        public List<CorteSave> cortes = new List<CorteSave>();
+        //private int numeroCortes = 0;
+    }
+}
+
+[Serializable]
+public class ConteudoAnim
+{
+    public List<FaseCutscene> todasFases = new List<FaseCutscene>();
+
+
+    [Serializable]
+    public class FaseCutscene
+    {
+        [SerializeField]
+        public List<Cutscene> cutscene = new List<Cutscene>();
+    }
+
+
+    [Serializable]
+    public class Cutscene
+    {
+        public List<CorteAnimacao> cortes = new List<CorteAnimacao>();
+        //private int numeroCortes = 0;
+    }
+}
+
+
+[Serializable]
+public class ConteudoAtual {
+    public int fase = 0;
+    public int cutscene = 0;
+    public int corte = 0;
+}
+
+[Serializable]
 public class CorteSave
 {
+    public ConteudoAtual posicaoEmLista = new ConteudoAtual();
     [HideInInspector]
     public Vector3 posicao;
     [HideInInspector]
@@ -20,19 +72,6 @@ public class CorteSave
     public bool delay = false, fixa = true, velocidadeGradativa = false;
     public float tempoDelay = 0, tempoViagem = 0, delayTermino = 0;
     public Transform lookAt = null, posFinal = null;
-
-}
-
-[Serializable]
-public class EdicaoCorte
-{
-    public int indiceEdicao = 0;
-    public bool abrirCorte = false, salvarEdicao = false, zerarEdicao = false, setCameraCorte = false, deletarCorte = false, utilizarCameraAtual = false;
-    public CorteSave corteSelecionado = new CorteSave();
-    [HideInInspector]
-    public bool aberto = false;
-    [HideInInspector]
-    public int corteAberto = 0;
 }
 
 [Serializable]
@@ -72,14 +111,10 @@ public class SerializableQuaternion
 public class DirectorsContent : MonoBehaviour {
 
     public static DirectorsContent instance;
+    [Header("Conteúdo das cutscenes")]
+    public Conteudo conteudo = new Conteudo();
 
     #region Variaveis
-    [Header("Configurações de Backup")]
-    [Tooltip("Salva a lista de cortes num caminho específico")]
-    public bool saveBackup = false;
-    [Tooltip("Carrega a lista de cortes (se houver alguma)")]
-    public bool loadBackup = false;
-
 
     [Header("Configurações de camera atual")]
     [Tooltip("Salva a posição inicial da camera")]
@@ -89,33 +124,16 @@ public class DirectorsContent : MonoBehaviour {
 
     [Header("Configurações do corte atual")]
     public bool addCorte = false;
-    private bool deletarUltimo = false;
-    public bool listarCortes = false; public bool deletarTudo = false;
-    public bool zerarObjeto = false; public bool setCorteAnterior = false;
+    public bool deletarTudo = false;
+    public bool zerarObjeto = false;
 
 
-    private int indicePos = 0;
-
-    [SerializeField]
-    [HideInInspector]
-    public int numeroPos = 0;
-
-
-    //[Header("Visualização do corte")]
     public CorteSave corteAtual = new CorteSave();
 
-    [Header("Edições de Cortes")]
-    public EdicaoCorte edicaoCorte = new EdicaoCorte();
-    public AdicaoCorte insertCorte = new AdicaoCorte();
-
 
     [SerializeField]
     [HideInInspector]
-    public List<CorteSave> posicoesCorte = new List<CorteSave>();
-
-    [SerializeField]
-    [HideInInspector]
-    private CorteSave corteInicial = new CorteSave();
+    private CorteSave posInicialCamera = new CorteSave();
 
 
     private string diretorioListagem = "C:/Leonardo/ListaCenas.txt";
@@ -134,18 +152,7 @@ public class DirectorsContent : MonoBehaviour {
         {
             addCorte = false;
             AddNovaPos();
-        }
-        else if (deletarUltimo)
-        {
-            deletarUltimo = false;
-            DeletarUltimaPos();
-        }
-        else if (listarCortes)
-        {
-            listarCortes = false;
-            ListarCortesTxt();
-        }
-        else if (deletarTudo)
+        }else if (deletarTudo)
         {
             deletarTudo = false;
             if (EditorUtility.DisplayDialog("Deletar Lista de cortes", "Deseja deletar a lista de cortes?", "Deletar", "Não deletar"))
@@ -158,131 +165,18 @@ public class DirectorsContent : MonoBehaviour {
         {
             zerarObjeto = false;
             ZerarObjetoAtual();
-        }
-        else if (setCorteAnterior)
-        {
-            setCorteAnterior = false;
-            SetCameraEmAnterior();
-        }
-        else if (setPosInicial)
+        }else if (setPosInicial)
         {
             setPosInicial = false;
-            corteInicial.rotacao = Camera.main.transform.rotation;
-            corteInicial.posicao = Camera.main.transform.position;
+            posInicialCamera.rotacao = Camera.main.transform.rotation;
+            posInicialCamera.posicao = Camera.main.transform.position;
         }
         else if (voltaCameraInicial)
         {
             voltaCameraInicial = false;
-            Camera.main.transform.position = corteInicial.posicao;
-            Camera.main.transform.rotation = corteInicial.rotacao;
+            Camera.main.transform.position = posInicialCamera.posicao;
+            Camera.main.transform.rotation = posInicialCamera.rotacao;
         }
-        else if (saveBackup)
-        {
-            saveBackup = false;
-            Save();
-        }
-        else if (loadBackup)
-        {
-            loadBackup = false;
-            Load();
-        }
-
-        #endregion
-
-        #region InputEdição
-        if (edicaoCorte.abrirCorte)
-        {
-            if (edicaoCorte.indiceEdicao >= 0 && edicaoCorte.indiceEdicao < posicoesCorte.Count)
-            {
-                edicaoCorte.aberto = true;
-                //Debug.Log("Abriu");
-
-                edicaoCorte.corteSelecionado = CopiaCorte(posicoesCorte[edicaoCorte.indiceEdicao]);
-            }
-            else if (EditorUtility.DisplayDialog("Indisponível", "Este corte não existe. Consulte a lista de cortes.", "Ok"))
-            {
-                edicaoCorte.indiceEdicao = posicoesCorte.Count - 1;
-            }
-
-            edicaoCorte.abrirCorte = false;
-            edicaoCorte.corteAberto = edicaoCorte.indiceEdicao;
-        }
-        else if (edicaoCorte.zerarEdicao)
-        {
-            edicaoCorte.utilizarCameraAtual = false;
-            edicaoCorte.aberto = false;
-            edicaoCorte.corteSelecionado = new CorteSave();
-            edicaoCorte.zerarEdicao = false;
-        }
-        else if (edicaoCorte.salvarEdicao)
-        {
-            if (edicaoCorte.aberto)
-            {
-                if (EditorUtility.DisplayDialog("Confirmar save", "Deseja sobrepor este corte pelo da lista anterior?", "Sim", "Não"))
-                {
-                    if (edicaoCorte.utilizarCameraAtual) {
-                        edicaoCorte.corteSelecionado.posicao = Camera.main.gameObject.transform.position;
-                        edicaoCorte.corteSelecionado.rotacao = Camera.main.gameObject.transform.rotation;
-                    }
-                    posicoesCorte[edicaoCorte.indiceEdicao] = CopiaCorte(edicaoCorte.corteSelecionado);
-                }
-            }
-            else if (EditorUtility.DisplayDialog("Abrir corte", "Abra um corte antes de salvar.", "Ok"))
-            {
-            }
-
-            edicaoCorte.salvarEdicao = false;
-        }
-        else if (edicaoCorte.setCameraCorte)
-        {
-            if (edicaoCorte.aberto)
-            {
-                Camera.main.gameObject.transform.position = edicaoCorte.corteSelecionado.posicao;
-                Camera.main.gameObject.transform.rotation = edicaoCorte.corteSelecionado.rotacao;
-            }
-            else if (EditorUtility.DisplayDialog("Abrir corte", "Abra um corte antes de configurar-lo.", "Ok"))
-            {
-            }
-
-            edicaoCorte.setCameraCorte = false;
-        }
-        else if (edicaoCorte.deletarCorte)
-        {
-            if (edicaoCorte.aberto)
-            {
-                if (EditorUtility.DisplayDialog("Deletar corte", "Deseja mesmo deletar este corte? Os demais cortes serão realocados para suas novas posições.", "Sim", "Não"))
-                {
-                    posicoesCorte.RemoveAt(edicaoCorte.indiceEdicao);
-                }
-            }
-
-            edicaoCorte.deletarCorte = false;
-        }
-
-        if (edicaoCorte.aberto == true)
-        {
-            if (edicaoCorte.indiceEdicao != edicaoCorte.corteAberto)
-            {
-                if (EditorUtility.DisplayDialog("Fechar corte.", "Feche o corte atual para alterar o indice.", "Ok"))
-                {
-                }
-            }
-
-            edicaoCorte.indiceEdicao = edicaoCorte.corteAberto;
-        }
-        #endregion
-
-        #region InputAddCorte
-        if (insertCorte.addCorte)
-        {
-            insertCorte.addCorte = false;
-            InsertCorte();
-        }
-        else if (insertCorte.zerarObjeto) {
-            insertCorte.zerarObjeto = false;
-            insertCorte.corteSelecionado = new CorteSave();
-        }
-
 
         #endregion
 
@@ -349,92 +243,9 @@ public class DirectorsContent : MonoBehaviour {
 
     #region f_Original
 
-    private void SetCameraEmAnterior()
-    {
-#if UNITY_EDITOR
-        if (posicoesCorte.Count > 0)
-        {
-            Camera.main.gameObject.transform.position = posicoesCorte[numeroPos].posicao;
-            Camera.main.gameObject.transform.rotation = posicoesCorte[numeroPos].rotacao;
-            Debug.Log("Setado na ultima posição");
-        }
-        else
-        {
-            Debug.Log("Não há ultima posição");
-        }
-#endif
-    }
-
-    private void ListarCortesTxt()
-    {
-#if UNITY_EDITOR
-        int temp = 0;
-        string lines = "";
-        foreach (CorteSave a in posicoesCorte)
-        {
-            lines += "Indice: " + temp + "\r\n";
-            lines += "Pos: (" + a.posicao.x + ", " + a.posicao.y + ", " + a.posicao.z + ")" + "\r\n";
-            lines += "Delay: " + a.delay + "\r\n";
-            lines += "Tempo delay: " + a.tempoDelay + "\r\n";
-            lines += "Tempo Viagem: " + a.tempoViagem + "\r\n";
-            lines += "LookAt: " + a.lookAt + "\r\n";
-            lines += "PosFinal: " + a.posFinal + "\r\n";
-
-            lines += "\r\n" + "\r\n" + "\r\n" + "\r\n";
-            temp++;
-        }
-
-        if (temp == 0)
-        {
-            lines = "Nenhum corte listado";
-            Debug.Log(lines);
-        }
-        else
-        {
-            try
-            {
-                // Write the string to a file.
-                System.IO.StreamWriter file = new System.IO.StreamWriter(diretorioListagem);
-                file.WriteLine(lines);
-
-                file.Close();
-                Debug.Log("Cortes listados com sucesso.");
-            }
-            catch
-            {
-                Debug.LogError("Cortes não puderam ser listados");
-            }
-        }
-
-
-
-#endif
-    }
-
-    private void DeletarUltimaPos()
-    {
-#if UNITY_EDITOR
-
-        int indiceDel = posicoesCorte.Count - 1;
-        if (indiceDel >= 0)
-        {
-            posicoesCorte.RemoveAt(indiceDel);
-            numeroPos = 0;
-            Debug.Log("Posicao deletada com sucesso." + "\nIndice: " + indiceDel);
-            ZerarObjetoAtual();
-        }
-        else
-        {
-            Debug.Log("Não é possivel deletar o ultimo corte");
-        }
-
-#endif
-    }
-
     private void DeletarListaCompleta()
     {
-        posicoesCorte.Clear();
-        numeroPos = 0;
+        conteudo.todasFases.Clear();
         Debug.Log("Lista deletada");
         ZerarObjetoAtual();
     }
@@ -444,14 +255,14 @@ public class DirectorsContent : MonoBehaviour {
 #if UNITY_EDITOR
         if (Camera.main != null)
         {
-            numeroPos++;
-            CorteSave objetoTemp = corteAtual;
+            CorteSave objetoTemp = CopiaCorte(corteAtual);
             objetoTemp.posicao = Camera.main.transform.position;
             objetoTemp.rotacao = Camera.main.transform.rotation;
 
+            conteudo.todasFases[objetoTemp.posicaoEmLista.fase].cutscene[objetoTemp.posicaoEmLista.cutscene].cortes.Insert(objetoTemp.posicaoEmLista.corte, objetoTemp);
 
-            posicoesCorte.Add(objetoTemp);
-            Debug.Log("Posicao Adicionada com sucesso." + "\nIndice: " + (numeroPos - 1).ToString() + "\nPos: " + objetoTemp.posicao + "\nRot: " + objetoTemp.rotacao);
+            //posicoesCorte.Add(objetoTemp);
+            //Debug.Log("Posicao Adicionada com sucesso." + "\nIndice: " + (numeroPos - 1).ToString() + "\nPos: " + objetoTemp.posicao + "\nRot: " + objetoTemp.rotacao);
             ZerarObjetoAtual();
         }
         else
@@ -470,147 +281,60 @@ public class DirectorsContent : MonoBehaviour {
 
     #endregion
 
-    #region f_Adicao
-
-    private void InsertCorte() {
-#if UNITY_EDITOR
-        if (insertCorte.novoIndice >= 0)
-        {
-            if (insertCorte.novoIndice < posicoesCorte.Count)
-            {
-                if (EditorUtility.DisplayDialog("Adição de corte", "Este corte será adicionado no indice " + insertCorte.novoIndice.ToString() +
-                    ". Os cortes serão realocados para uma casa depois"
-                    , "Adicionar", "Não adicionar"))
-                {
-                    insertCorte.corteSelecionado.posicao = Camera.main.transform.position;
-                    insertCorte.corteSelecionado.rotacao = Camera.main.transform.rotation;
-
-                    numeroPos++;
-                    posicoesCorte.Insert(insertCorte.novoIndice, insertCorte.corteSelecionado);
-                }
-            }
-            else
-            {
-                if (insertCorte.novoIndice > 0)
-                {
-                    insertCorte.novoIndice = posicoesCorte.Count - 1;
-                }
-                else
-                {
-                    insertCorte.novoIndice = 0;
-                }
-
-                if (EditorUtility.DisplayDialog("Valor incorreto", "Este corte não pode ser adicionado na ultima posição da lista. Adicione-o através do editor original.", "Ok"))
-                {
-                }
-            }
-        }
-        else
-        {
-            insertCorte.novoIndice = 0;
-            if (EditorUtility.DisplayDialog("Valor incorreto", "Este corte não pode ser adicionado. Adicione um indice válido.", "Ok"))
-            {
-                insertCorte.novoIndice = 0;
-            }
-        }
-#endif
-    }
-
-    #endregion
-
-    #region f_Backup
-    private void Save()
-    {
-#if UNITY_EDITOR
-        List<SerializableCorteSave> data = new List<SerializableCorteSave>();
-
-
-        for (int i = 0; i < posicoesCorte.Count; i++)
-        {
-            SerializableCorteSave corte = ConverterCorteSave(posicoesCorte[i]);
-            data.Add(corte);
-        }
-
-
-        try
-        {
-            if (File.Exists(diretorioSave + "corte.bkup"))
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                FileStream file = File.Create(diretorioSave + "corte.bkup");
-                if (EditorUtility.DisplayDialog("Confirmar save", "Já existe um arquivo de Backup, deseja sobrepor o arquivo?", "Sim", "Não"))
-                {
-                    bf.Serialize(file, data);
-                    file.Close();
-                    Debug.Log("Lista salva com sucesso.");
-                }
-            }
-            else
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                FileStream file = File.Create(diretorioSave + "corte.bkup");
-                bf.Serialize(file, data);
-                file.Close();
-                Debug.Log("Lista salva com sucesso.");
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError(e);
-        }
-
-#endif
-
-    }
-
-    private void Load()
-    {
-#if UNITY_EDITOR
-        if (posicoesCorte.Count != 0)
-        {
-            if (EditorUtility.DisplayDialog("Deletar Cortes", "Você deseja excluir os cortes que você tem carregado no Inspector? ", "Deletar e carregar Backup!", "Não Deletar"))
-            {
-            }
-            else
-            {
-                return;
-            }
-        }
-
-
-        if (File.Exists(diretorioSave + "corte.bkup"))
-        {
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Open(diretorioSave + "corte.bkup", FileMode.Open);
-            List<SerializableCorteSave> data = (List<SerializableCorteSave>)bf.Deserialize(file);
-            file.Close();
-
-            posicoesCorte.Clear();
-            for (int i = 0; i < data.Count; i++)
-            {
-                posicoesCorte.Add(ConverterCorteSave(data[i]));
-            }
-
-            numeroPos = posicoesCorte.Count - 1;
-            Debug.Log("Loading realizado com sucesso");
-        }
-        else if (EditorUtility.DisplayDialog("Nenhum backup", "Nenhum Backup foi encontrado. Verifique pelo arquivo no diretório: " + diretorioSave, "Ok"))
-        {
-        }
-#endif
-    }
-    #endregion
 
     #region GettersSetters
-    public CorteSave GetCorte(int indice) {
-        //Debug.Log("Indice: " + indice + "\nCount: " + posicoesCorte.Count);
-        if (posicoesCorte.Count > indice)
+    public CorteSave GetCorte(int fase, int cutscene, int corte) {
+        if (conteudo.todasFases.Count > fase) {
+            if (conteudo.todasFases[fase].cutscene.Count > cutscene) {
+                if (conteudo.todasFases[fase].cutscene[cutscene].cortes.Count > corte)
+                {
+                    CorteSave corteTemp = CopiaCorte(conteudo.todasFases[fase].cutscene[cutscene].cortes[corte]);
+
+                    return corteTemp;
+                }
+            }
+        }
+
+        Debug.Log("Indice Invalido!");
+        return null;
+    }
+
+
+    public CorteSave GetCorte(ConteudoAtual conteudoTemp)
+    {
+        if (conteudo.todasFases.Count > conteudoTemp.fase)
         {
-            return posicoesCorte[indice];
+            if (conteudo.todasFases[conteudoTemp.fase].cutscene.Count > conteudoTemp.cutscene)
+            {
+                if (conteudo.todasFases[conteudoTemp.fase].cutscene[conteudoTemp.cutscene].cortes.Count > conteudoTemp.corte)
+                {
+                    CorteSave corteTemp = CopiaCorte(conteudo.todasFases[conteudoTemp.fase].cutscene[conteudoTemp.cutscene].cortes[conteudoTemp.corte]);
+
+                    return corteTemp;
+                }
+            }
         }
-        else {
-            return null;
-        }
+
+        //Debug.Log("Indice Invalido!");
+        return null;
+    }
+
+
+    public int GetNumeroFases() {
+        return conteudo.todasFases.Count;
+    }
+
+    public int GetNumeroCutscenes(ConteudoAtual conteudoTemp) {
+        return conteudo.todasFases[conteudoTemp.fase].cutscene.Count;
+    }
+
+    public int GetNumeroCortes(ConteudoAtual conteudoTemp) {
+        return conteudo.todasFases[conteudoTemp.fase].cutscene[conteudoTemp.cutscene].cortes.Count;
+    }
+
+    public int GetCorteAtual() {
+        return corteAtual.posicaoEmLista.corte;
+
     }
     #endregion
 
@@ -744,7 +468,7 @@ public class DirectorsContent : MonoBehaviour {
 
     private CorteSave CopiaCorte(CorteSave original)
     {
-        Debug.Log("Copiando Cortes");
+        //Debug.Log("Copiando Cortes");
         CorteSave copia = new CorteSave();
         copia.posicao = original.posicao;
         copia.rotacao = original.rotacao;
@@ -756,13 +480,11 @@ public class DirectorsContent : MonoBehaviour {
         copia.tempoViagem = original.tempoViagem;
         copia.velocidadeGradativa = original.velocidadeGradativa;
         copia.delayTermino = original.delayTermino;
+        copia.posicaoEmLista = original.posicaoEmLista;
+
 
         return copia;
     }
 
     #endregion
 }
-
-
-
-

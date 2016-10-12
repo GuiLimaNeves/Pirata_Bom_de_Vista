@@ -19,11 +19,12 @@ public class PlayerManager : MonoBehaviour {
     [SerializeField]
     public List<CorteAnimacao> listaAnimacao = new List<CorteAnimacao>();
 
+
     private Animator animator;
     private int indiceNome = 1;
     private CorteAnimacao corteAtual;
     private AudioSource _audioSource;
-
+    private Transform myTransform;
 
     //TP_CONTROLLER
 
@@ -35,6 +36,7 @@ public class PlayerManager : MonoBehaviour {
         instance = this;
         animator = GetComponent<Animator>();
         _audioSource = GetComponent<AudioSource>();
+        myTransform = this.transform;
 
         CharacterController = GetComponent("CharacterController") as CharacterController;
         CameraManager.UseExistingOrCreateNewMainCamera();
@@ -53,14 +55,16 @@ public class PlayerManager : MonoBehaviour {
                     return;
                 GetLocomotionInput();
 
+
+                HandleActionInput();
+
+                PlayerController.instance.UpdateMotor();
                 break;
         }
 
 
  
-        HandleActionInput();
 
-        PlayerController.instance.UpdateMotor();
 
     }
 
@@ -99,7 +103,7 @@ public class PlayerManager : MonoBehaviour {
 
     public void PlayAnimacaoCutscene()
     {
-        int indiceAnim = DirectorsManager.instance.GetIndiceAnimacao();
+        ConteudoAtual indiceAnim = DirectorsManager.instance.GetCorteAtual();
 
 
         if (FazParteAnimacao(indiceAnim))
@@ -115,6 +119,8 @@ public class PlayerManager : MonoBehaviour {
 
             //} 
             //}
+
+
 
 
             if (indiceNome > 1)
@@ -134,6 +140,15 @@ public class PlayerManager : MonoBehaviour {
 
             anim_OverrideController[nome] = clipe;
             animator.runtimeAnimatorController = anim_OverrideController;
+
+            if (corteAtual.posicao != Vector3.zero) {
+                myTransform.position = corteAtual.posicao;
+            }
+
+            if (corteAtual.rotacao != Vector3.zero) {
+                myTransform.eulerAngles = corteAtual.rotacao;
+            }
+
 
             StartCoroutine(AtivaAnimacaoCutscene());
 
@@ -176,20 +191,27 @@ public class PlayerManager : MonoBehaviour {
 
 
 
-    public bool FazParteAnimacao(int indice)
+    public bool FazParteAnimacao(ConteudoAtual indice)
     {
-        //Debug.Log(indice);
+        
         for (int i = 0; i < listaAnimacao.Count; i++)
         {
-            if (indice == listaAnimacao[i].indiceAnim)
+            if (indice.fase == listaAnimacao[i].indiceAnim.fase)
             {
-                corteAtual = DirectorsManager.instance.CopiaCorteAnimacao(listaAnimacao[i]);
-                return true;
+                if (indice.cutscene == listaAnimacao[i].indiceAnim.cutscene) {
+                    if (indice.corte == listaAnimacao[i].indiceAnim.corte) {
+                        corteAtual = DirectorsManager.instance.CopiaCorteAnimacao(listaAnimacao[i]);
+                        return true;
+                    }
+                }
             }
         }
 
+        //Debug.Log("Faz parte?");
         corteAtual = new CorteAnimacao();
         return false;
+
+
     }
 
 
@@ -256,6 +278,12 @@ public class PlayerManager : MonoBehaviour {
     {
 
         PlayerController.instance.Jump();
+    }
+
+    public void AtualizaPosPlayerObjetivo(SaveTransform newTransform) {
+        myTransform.position = newTransform.position;
+        myTransform.rotation = newTransform.rotation;
+        myTransform.localScale = newTransform.localScale;
     }
 
 }

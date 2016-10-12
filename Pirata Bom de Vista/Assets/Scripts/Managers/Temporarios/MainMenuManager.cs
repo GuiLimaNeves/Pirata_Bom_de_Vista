@@ -10,6 +10,9 @@ public class MainMenuManager : MonoBehaviour {
     public Transform menuPai;
     public float escalaMax = 1.5f;
     public Color corSelecionado, corOriginal;
+    public Material oceano;
+    public GameObject menuConfirmacao;
+
 
     private GameObject[] itens;
     private int numeroItens = 0, itemAtual = 0;
@@ -20,8 +23,9 @@ public class MainMenuManager : MonoBehaviour {
     public bool menuFading = true;
     public bool moveOceano = true;
     private float offset = 0;
-    public Material oceano;
+    
 
+    
     private AudioSource _source;
 
     // Use this for initialization
@@ -39,7 +43,7 @@ public class MainMenuManager : MonoBehaviour {
         numeroItens = menuPai.childCount;
         itens = new GameObject[numeroItens];
 
-
+        ResetaPopUps();
         AddListeners();
         StartCoroutine(EsperaTerminoFade());
 	}
@@ -331,5 +335,13 @@ public class MainMenuManager : MonoBehaviour {
 
     public bool GetMenuFading() {
         return menuFading;
+    }
+
+    public void ConfirmacaoNovoJogo() {
+        menuConfirmacao.SetActive(true);
+    }
+
+    public void ResetaPopUps() {
+        menuConfirmacao.SetActive(false);
     }
 }

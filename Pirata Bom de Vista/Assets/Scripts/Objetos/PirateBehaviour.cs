@@ -49,7 +49,7 @@ public class PirateBehaviour : MonoBehaviour {
     }
 
     public void PlayAnimacaoCutscene() {
-        int indiceAnim = DirectorsManager.instance.GetIndiceAnimacao();
+        ConteudoAtual indiceAnim = DirectorsManager.instance.indiceConteudoAtual;
         
 
         if (FazParteAnimacao(indiceAnim)) {
@@ -58,7 +58,7 @@ public class PirateBehaviour : MonoBehaviour {
             AnimatorOverrideController anim_OverrideController = new AnimatorOverrideController();
             anim_OverrideController.runtimeAnimatorController = myController;
             AnimationClip clipe = corteAtual.clipeAnim;
-            string nome = "";
+            string nome = clipe.name;
             //for (int i = 0; i < anim_OverrideController.clips.Length; i++) {
             //Debug.Log(anim_OverrideController.clips[i].overrideClip.name.ToString());
             //  if (anim_OverrideController.clips[i].ToString() != "Idle") {
@@ -66,7 +66,7 @@ public class PirateBehaviour : MonoBehaviour {
             //} 
             //}
 
-
+            /*
             if (indiceNome > 1)
             {
                 
@@ -79,7 +79,7 @@ public class PirateBehaviour : MonoBehaviour {
 
             //Debug.Log("Nome anterior: " + nome);
             indiceNome++;
-            
+            */
 
             anim_OverrideController[nome] = clipe;
             animator.runtimeAnimatorController = anim_OverrideController;
@@ -121,12 +121,19 @@ public class PirateBehaviour : MonoBehaviour {
         yield return 0;
     }
 
-    public bool FazParteAnimacao(int indice) {
+    public bool FazParteAnimacao(ConteudoAtual indice) {
         //Debug.Log(indice);
         for (int i = 0; i < listaAnimacao.Count; i++) {
-            if (indice == listaAnimacao[i].indiceAnim) {
-                corteAtual = DirectorsManager.instance.CopiaCorteAnimacao(listaAnimacao[i]);
-                return true;
+            if (indice.fase == listaAnimacao[i].indiceAnim.fase)
+            {
+                if (indice.cutscene == listaAnimacao[i].indiceAnim.cutscene)
+                {
+                    if (indice.corte == listaAnimacao[i].indiceAnim.corte)
+                    {
+                        corteAtual = DirectorsManager.instance.CopiaCorteAnimacao(listaAnimacao[i]);
+                        return true;
+                    }
+                }
             }
         }
 
